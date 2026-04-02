@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IZGIV Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            },
+            colors: {
+              glass: {
+                100: 'rgba(255, 255, 255, 0.1)',
+                200: 'rgba(255, 255, 255, 0.2)',
+                300: 'rgba(255, 255, 255, 0.3)',
+                border: 'rgba(255, 255, 255, 0.2)',
+              }
+            },
+            animation: {
+              'blob': 'blob 7s infinite',
+              'spin-slow': 'spin 12s linear infinite',
+            },
+            keyframes: {
+              blob: {
+                '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                '100%': { transform: 'translate(0px, 0px) scale(1)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        background-color: #050505;
+        overflow-x: hidden;
+        user-select: none;
+      }
+
+      /* Electron frameless window drag region */
+      .electron-titlebar {
+        -webkit-app-region: drag;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 36px;
+        z-index: 9999;
+        pointer-events: auto;
+      }
+      /* Buttons/links inside the titlebar must not be draggable */
+      .electron-titlebar * {
+        -webkit-app-region: no-drag;
+      }
+      /* Offset main content so it doesn't hide behind titlebar */
+      #root {
+        padding-top: 0;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+      .mask-gradient {
+        mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+        -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+      }
+      .lyrics-container { scroll-behavior: smooth; }
+
+      /* ── Enhanced Animations ───────────────────────────── */
+      @keyframes waveBar {
+        0%, 100% { transform: scaleY(0.3); opacity: 0.6; }
+        50% { transform: scaleY(1); opacity: 1; }
+      }
+      @keyframes pulseRing {
+        0% { box-shadow: 0 0 0 0px var(--ring-color, rgba(255,255,255,0.4)); }
+        100% { box-shadow: 0 0 0 18px transparent; }
+      }
+      @keyframes floatUp {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+      }
+      .playing-ring {
+        animation: pulseRing 2s ease-out infinite;
+      }
+      .cover-float {
+        animation: floatUp 6s ease-in-out infinite;
+      }
+      .wave-bar {
+        display: inline-block;
+        width: 3px;
+        border-radius: 99px;
+        transform-origin: bottom;
+      }
+      .wave-bar:nth-child(1) { animation: waveBar 0.8s ease-in-out infinite 0.0s; }
+      .wave-bar:nth-child(2) { animation: waveBar 0.8s ease-in-out infinite 0.15s; }
+      .wave-bar:nth-child(3) { animation: waveBar 0.8s ease-in-out infinite 0.05s; }
+      .wave-bar:nth-child(4) { animation: waveBar 0.8s ease-in-out infinite 0.22s; }
+
+      @keyframes waveform {
+        0%, 100% { height: 10px; opacity: 0.3; }
+        50% { height: 40px; opacity: 1; }
+      }
+      .animate-waveform {
+        animation: waveform 0.7s ease-in-out infinite;
+      }
+
+      /* Glassmorphism enhancement */
+      .glass-enhanced {
+        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+        backdrop-filter: blur(50px) saturate(200%);
+        -webkit-backdrop-filter: blur(50px) saturate(200%);
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      }
+
+      @keyframes orbit {
+        from { transform: rotate(0deg) translateX(100px) rotate(0deg); }
+        to   { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+      }
+      
+      .premium-bg {
+        background: radial-gradient(circle at 50% 50%, #0a0a0a 0%, #050505 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .premium-bg::before {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .premium-bg::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+    </style>
+</head>
+  <body class="premium-bg">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

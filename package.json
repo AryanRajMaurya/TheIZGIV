@@ -1,0 +1,61 @@
+{
+  "name": "izgiv-music-player",
+  "private": true,
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"cross-env NODE_ENV=development vite\" \"cross-env NODE_ENV=development wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "vite build && electron-builder",
+    "electron:start": "cross-env NODE_ENV=production electron ."
+  },
+  "dependencies": {
+    "@google/genai": "^1.33.0",
+    "discord-rpc": "^4.0.1",
+    "lucide-react": "^0.561.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^35.1.2",
+    "electron-builder": "^25.1.8",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.izgiv.music",
+    "productName": "IZGIV",
+    "directories": {
+      "output": "release-izgiv"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "IZGIV"
+    }
+  }
+}
