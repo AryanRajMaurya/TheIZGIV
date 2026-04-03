@@ -809,13 +809,20 @@ export default function App() {
               {[
                 { name: 'Friday.izgiv.tech', icon: <Bot size={22} />, desc: 'Modular Agentic Assistant', status: 'Latest', color: 'text-yellow-400', url: 'https://friday.izgiv.tech' },
                 { name: 'Izgiv.tech', icon: <Globe size={22} />, desc: 'Main Ecosystem Hub', status: 'Active', color: 'text-indigo-400', url: 'https://izgiv.tech' },
-                { name: 'Stream.izgiv.tech', icon: <Music size={22} />, desc: 'High-Fidelity Audio', status: 'Maintenance', color: 'text-white/40', url: 'https://stream.izgiv.tech' },
-                { name: 'Llama.izgiv.tech', icon: <Cpu size={22} />, desc: 'Advanced LLM API Hub', status: 'Production', color: 'text-green-400', url: 'https://llama.izgiv.tech' },
-                { name: 'Image.izgiv.tech', icon: <ImageIcon size={22} />, desc: 'AI Image Generation', status: 'Online', color: 'text-emerald-400', url: 'https://image.izgiv.tech' },
+                { name: 'Stream.izgiv.tech', icon: <Music size={22} />, desc: 'High-Fid Music Streaming', status: 'Mainten.', color: 'text-white/40', url: 'https://stream.izgiv.tech' },
+                { name: 'Llama.izgiv.tech', icon: <Cpu size={22} />, desc: 'Advanced LLM API Hub', status: 'Prod', color: 'text-green-400', url: 'https://llama.izgiv.tech' },
+                { name: 'Image.izgiv.tech', icon: <ImageIcon size={22} />, desc: 'AI Image Gen Hub', status: 'Online', color: 'text-emerald-400', url: 'https://image.izgiv.tech' },
                 { name: 'Groq.izgiv.tech', icon: <Zap size={22} />, desc: 'Groq/Llama AI Chat', status: 'Paid', color: 'text-orange-400', url: 'https://groq.izgiv.tech' },
                 { name: 'Chat.izgiv.tech', icon: <MessageCircle size={22} />, desc: 'Advanced Social Suite', status: 'Active', color: 'text-blue-400', url: 'https://chat.izgiv.tech' },
                 { name: 'Wallpaper.izgiv.tech', icon: <Layers size={22} />, desc: 'Premium HD Wallpapers', status: 'Free', color: 'text-pink-400', url: 'https://wallpaper.izgiv.tech' },
-                { name: 'Desktop.izgiv.tech', icon: <Monitor size={22} />, desc: 'OS Simulation & UI', status: 'Portfolio', color: 'text-cyan-400', url: 'https://desktop.izgiv.tech' },
+                { name: 'Desktop.izgiv.tech', icon: <Monitor size={22} />, desc: 'OS Simulation & UI', status: 'Portf.', color: 'text-cyan-400', url: 'https://desktop.izgiv.tech' },
+                { name: 'Hymn.izgiv.tech', icon: <Music size={22} />, desc: 'Ad-free Music Alt', status: 'Shutdown', color: 'text-red-400', url: 'https://hymn.izgiv.tech' },
+                { name: 'Magic Moments', icon: <Camera size={22} />, desc: 'Local Media Board', status: 'Beta', color: 'text-purple-400', url: 'https://chat.izgiv.tech/magic-moments' },
+                { name: 'Armage.izgiv.tech', icon: <Terminal size={22} />, desc: 'Desktop AI Bot (PC)', status: 'Alpha', color: 'text-emerald-500', url: 'https://armage.izgiv.tech' },
+                { name: 'Chatroom Node', icon: <Hash size={22} />, desc: 'RTC Engine Node', status: 'Dev', color: 'text-white/20', url: 'https://chatroom.izgiv.tech' },
+                { name: 'Monarch Node', icon: <Crown size={22} />, desc: 'Future Identity Node', status: 'Dev', color: 'text-yellow-600', url: 'https://monarch.izgiv.tech' },
+                { name: 'Studio Node', icon: <Palette size={22} />, desc: 'Multi-Modal Platform', status: 'Legacy', color: 'text-white/10', url: 'https://studio.izgiv.tech' },
+                { name: 'Moody Manager', icon: <Activity size={22} />, desc: 'AI Mood Analysis', status: 'Legacy', color: 'text-white/10', url: '#' },
               ].map(p => (
                 <GlassCard key={p.name} onClick={() => openLink(p.url)} className="!p-6 !rounded-[40px] border-white/5 bg-black/40 hover:bg-white/5 hover:border-white/20 transition-all group/item cursor-pointer">
                    <div className="flex items-center gap-5">
