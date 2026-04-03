@@ -23,6 +23,12 @@ IZGIV is a premium, AI-powered desktop music player built for those who value mi
 - **Local File Support**: Import and manage your local MP3/FLAC collection with integrated folder watching.
 - **High-Fidelity Audio**: Native Node.js streaming proxy for uncompressed audio quality.
 
+### 🌊 Immersive Soundscapes (New v1.1.0)
+- **Ambient Soundscape Mixer**: Layer professional-grade atmoshere over your music (Rain, Ocean, Fireplace, Forest, Thunder, Wind).
+- **Smart Sleep Timer**: Intelligent volume fade-out over 5 minutes to help you drift off peacefully.
+- **10-Band Equalizer**: Fine-tune your audio with a professional peaking-filter EQ engine.
+- **Auto-Scroll Lyrics**: Dynamic lyrics sync with precise scroll behavior ensuring the current verse is always centered.
+
 ### 🎮 Gaming & Social
 - **Modern Discord RPC**: Show off your exact "Now Playing" status on Discord with full album art sync and "Browsing" states.
 - **Identity System**: Personalized profiles with custom names and avatars.
@@ -36,6 +42,9 @@ IZGIV is a premium, AI-powered desktop music player built for those who value mi
 
 ### Intelligent Search
 ![Search View](./public/screenshots/search.png)
+
+### Discord RPC Engagement
+![Discord RPC Example](./public/screenshots/discord_rpc.png)
 
 ---
 
@@ -61,9 +70,10 @@ If you want to help make IZGIV even more powerful, here's how you can join:
 5. **Submit a PR**: We love new features, bug fixes, and especially UI refinements!
 
 ### Planned Roadmap:
-- [ ] Mood-based adaptive themes.
+- [x] Built-in audio visualizers (Waveform/Bars).
+- [x] Advanced 10-Band EQ Engine.
+- [/] Mood-based adaptive themes.
 - [ ] Collaborative real-time "Vibe Rooms".
-- [ ] Built-in audio visualizers (Waveform/Bars).
 - [ ] Mobile companion app.
 
 ---

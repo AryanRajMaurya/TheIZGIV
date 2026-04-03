@@ -1,6 +1,6 @@
 // Added React import to top level to fix "Cannot find namespace 'React'" errors throughout the file
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Search, Home, Library, Heart, ListMusic, Volume2, Mic2, Sparkles, Repeat, Shuffle, Loader2, Settings2, List, X, ChevronDown, Trash2, ArrowUp, Plus, ChevronRight, User, Settings, MessageSquare, LayoutGrid, Palette, Info, Menu, Image as ImageIcon, Github, Instagram, Globe, Music, MessageCircle, Bot, Zap, Cpu, Mail, ShieldAlert, Monitor, Terminal, Camera, Layers, ScrollText, Radio, Maximize2, Minimize2, Gauge, Activity, Folder, Share2, Copy, Timer, Pin } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Search, Home, Library, Heart, ListMusic, Volume2, Mic2, Sparkles, Repeat, Shuffle, Loader2, Settings2, List, X, ChevronDown, Trash2, ArrowUp, Plus, ChevronRight, User, Settings, MessageSquare, LayoutGrid, Palette, Info, Menu, Image as ImageIcon, Github, Instagram, Globe, Music, MessageCircle, Bot, Zap, Cpu, Mail, ShieldAlert, Monitor, Terminal, Camera, Layers, ScrollText, Radio, Maximize2, Minimize2, Gauge, Activity, Folder, Share2, Copy, Timer, Pin, Droplets, Waves, Coffee, Trees, Hash, Crown, CloudLightning, Flame, Wind } from 'lucide-react';
 import { GlassCard, GlassButton, GlassInput } from './components/GlassUI';
 import { usePlayer } from './hooks/usePlayer';
 import { getColorsFromCover } from './utils/colors';
@@ -14,10 +14,10 @@ import { Visualizer } from './components/Visualizer';
 const SidebarItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all duration-300 group relative border border-transparent ${active ? 'bg-white/10 text-white border-white/5 shadow-xl' : 'text-white/40 hover:text-white/70 hover:bg-white/5 hover:border-white/5'}`}
+    className={`w-full flex items-center gap-3 px-5 py-3 rounded-[24px] transition-all duration-300 group relative border border-transparent ${active ? 'bg-white/10 text-white border-white/5 shadow-xl' : 'text-white/40 hover:text-white/70 hover:bg-white/5 hover:border-white/5'}`}
   >
     <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</div>
-    <span className="font-bold text-sm tracking-tight">{label}</span>
+    <span className="font-bold text-xs tracking-tight">{label}</span>
     {active && <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_#fff]" />}
   </button>
 );
@@ -233,7 +233,7 @@ export default function App() {
     state, playSong, togglePlay, nextSong, prevSong, seek, 
     addToQueue, removeFromQueue, reorderQueue, clearQueue, 
     setPlaybackRate, setPreservesPitch, isTransitioning, isLoading: isPlayerLoading,
-    setIsDragging, eqGains, updateEqGain, analyser, syncState
+    setIsDragging, setVolume, eqGains, updateEqGain, analyser, audioContext, syncState
   } = usePlayer(autoPlay);
   
   const [view, setView] = useState<View>('home');
@@ -245,6 +245,81 @@ export default function App() {
     }
     return { name: 'Obsidian Indigo', primary: '#4f46e5', secondary: '#818cf8', accent: '#c7d2fe' };
   });
+
+  const [ambientVolumes, setAmbientVolumes] = useState<Record<string, number>>({
+    rain: 0,
+    waves: 0,
+    fireplace: 0,
+    forest: 0,
+    thunder: 0,
+    wind: 0
+  });
+  const [isAmbientMode, setIsAmbientMode] = useState(false);
+  const isAudioUnlocked = useRef(false);
+  const ambientAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
+
+  useEffect(() => {
+    const sounds = [
+      { id: 'rain', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/heavy-rain.ogg' },
+      { id: 'waves', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/stream.ogg' },
+      { id: 'fireplace', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/fireplace.ogg' },
+      { id: 'forest', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/forest-rain.ogg' },
+      { id: 'thunder', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/thunderstorm.ogg' },
+      { id: 'wind', url: 'https://raw.githubusercontent.com/Muges/ambientsounds/master/wind.ogg' }
+    ];
+    
+    // Note: Replaced Pixabay URLs with SoundHelix placeholders to verify if CORS was the issue. 
+    // Usually local assets or dedicated CDNs work best in Electron.
+
+    sounds.forEach(s => {
+      const audio = new Audio(s.url);
+      audio.loop = true;
+      audio.volume = 0;
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      ambientAudiosRef.current[s.id] = audio;
+    });
+
+    return () => {
+      Object.values(ambientAudiosRef.current).forEach((a: any) => {
+        if (a && typeof a.pause === 'function') a.pause();
+      });
+    };
+  }, []);
+
+  const unlockAudio = useCallback(() => {
+    if (isAudioUnlocked.current) return;
+    Object.values(ambientAudiosRef.current).forEach((audio: any) => {
+      audio.play().then(() => {
+        audio.pause();
+      }).catch(() => {});
+    });
+    isAudioUnlocked.current = true;
+  }, []);
+
+  const updateAmbientVolume = (id: string, vol: number) => {
+    setAmbientVolumes(prev => ({ ...prev, [id]: vol }));
+    const audio = ambientAudiosRef.current[id];
+    if (audio) {
+      audio.volume = vol;
+      if (vol > 0 && audio.paused) {
+        audio.play().catch(err => {
+          console.warn(`[Ambient] Re-activation required for ${id}. Error: ${err.message}`);
+          // Attempt to resume AudioContext if it exists (for EQ)
+          if (audioContext?.state === 'suspended') audioContext.resume();
+        });
+      } else if (vol === 0 && !audio.paused) {
+        audio.pause();
+      }
+    }
+  };
+
+  const toggleAmbientMode = (enabled: boolean) => {
+    setIsAmbientMode(enabled);
+    if (enabled && state.isPlaying) {
+      togglePlay();
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('izgiv_theme', JSON.stringify(theme));
@@ -291,15 +366,22 @@ export default function App() {
       if (sleepTimer.timeLeft <= 0) {
         if (state.isPlaying) togglePlay();
         setSleepTimer({ active: false, timeLeft: null });
-        alert("IZGIV Sleep Timer: Playback stopped.");
+        setVolume(1.0); // Reset volume for next time
         return;
       }
+
+      // Smart Fade: If less than 5 minutes left, gradually lower volume
+      if (sleepTimer.timeLeft <= 300) {
+        const targetVolume = sleepTimer.timeLeft / 300;
+        setVolume(targetVolume);
+      }
+
       sleepTimerRef.current = setTimeout(() => {
         setSleepTimer(prev => ({ ...prev, timeLeft: prev.timeLeft! - 1 }));
       }, 1000);
       return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current); };
     }
-  }, [sleepTimer, state.isPlaying, togglePlay]);
+  }, [sleepTimer, state.isPlaying, togglePlay, setVolume]);
 
   const startSleepTimer = (minutes: number) => {
     setSleepTimer({ active: true, timeLeft: minutes * 60 });
@@ -662,6 +744,61 @@ export default function App() {
 
       <section>
         <div className="flex items-center gap-3 mb-8">
+           <Radio size={20} className="text-white/40" />
+           <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Ambient Atmosphere</h2>
+           <div className="flex items-center gap-3 ml-auto">
+              <span className="text-[7px] font-black uppercase text-white/20 tracking-widest">Ambient Mode</span>
+              <button 
+                onClick={() => toggleAmbientMode(!isAmbientMode)}
+                className={`w-12 h-6 rounded-full p-1 transition-all duration-300 ${isAmbientMode ? 'bg-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-white/5 border border-white/10'}`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-300 ${isAmbientMode ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+           </div>
+        </div>
+        <GlassCard className={`!p-8 !rounded-[40px] border-white/5 transition-all duration-500 ${isAmbientMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-black/20'}`}>
+           {isAmbientMode && (
+             <div className="mb-8 p-4 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 flex items-center gap-4 animate-in slide-in-from-top-2">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                   <Sparkles size={20} className="animate-pulse" />
+                </div>
+                <div>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Ambient Mode Active</p>
+                   <p className="text-[9px] text-white/40 font-bold uppercase tracking-tight">Music playback paused for pure atmosphere</p>
+                </div>
+             </div>
+           )}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              {[
+                { id: 'rain', name: 'Heavy Rain', icon: <Droplets size={18} /> },
+                { id: 'waves', name: 'River Stream', icon: <Waves size={18} /> },
+                { id: 'fireplace', name: 'Warm Fireplace', icon: <Flame size={18} /> },
+                { id: 'forest', name: 'Forest Rain', icon: <Trees size={18} /> },
+                { id: 'thunder', name: 'Thunderstorm', icon: <CloudLightning size={18} /> },
+                { id: 'wind', name: 'Strong Wind', icon: <Wind size={18} /> }
+              ].map(s => (
+                <div key={s.id} className="space-y-4">
+                   <div className="flex justify-between items-center px-1">
+                      <div className="flex items-center gap-3">
+                         <span className="text-white/40">{s.icon}</span>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{s.name}</span>
+                      </div>
+                      <span className="text-[9px] font-black text-white/30 tabular-nums">{Math.round(ambientVolumes[s.id] * 100)}%</span>
+                   </div>
+                   <input 
+                    type="range" min="0" max="1" step="0.01" 
+                    value={ambientVolumes[s.id]} 
+                    onChange={(e) => updateAmbientVolume(s.id, parseFloat(e.target.value))}
+                    className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-white hover:accent-indigo-400 transition-all"
+                   />
+                </div>
+              ))}
+           </div>
+        </GlassCard>
+      </section>
+
+      <section>
+        <div className="flex items-center gap-3 mb-8">
            <Activity size={20} className="text-white/40" />
            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Audio Lab</h2>
            <span className="text-[7px] font-black uppercase bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full tracking-widest ml-auto">Local EQ Engine</span>
@@ -955,32 +1092,44 @@ export default function App() {
     const displayTime = isDraggingSeek ? dragTime : state.currentTime;
 
     return (
-      <div className="h-full grid grid-rows-[auto,1fr,auto] relative overflow-hidden bg-transparent pt-4 pb-24 md:pb-8">
+      <div className="h-full grid grid-rows-[auto,1fr,auto] relative overflow-hidden bg-transparent pt-0 pb-24 md:pb-8">
         {/* Row 1: Header Navigation */}
-        <div className="relative flex items-center justify-between px-4 lg:px-12 z-40 h-16">
-           <button onClick={() => setView('home')} className="p-2.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"><ChevronDown size={28} /></button>
+        <div className="relative flex items-center justify-between px-4 lg:px-12 z-40 h-10">
+           <button onClick={() => setView('home')} className="p-1.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"><ChevronDown size={24} /></button>
            <div className="flex flex-col items-center">
               <span className="text-[11px] font-black tracking-[0.6em] uppercase opacity-40 select-none">Now Playing</span>
            </div>
-           <button onClick={() => setShowQueue(true)} className="p-2.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"><List size={24} /></button>
-           <button 
-            onClick={() => (window as any).electronAPI?.toggleMiniPlayer(true)} 
-            className="p-2.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"
-            title="Mini-Player"
-           >
-             <Minimize2 size={24} />
-           </button>
+           <div className="flex items-center gap-1">
+             {showLyrics && (
+               <button 
+                onClick={() => setAutoScroll(!autoScroll)}
+                className={`p-1.5 px-3 rounded-xl border transition-all duration-300 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${autoScroll ? 'bg-white text-black border-white' : 'text-white/40 border-white/10 hover:bg-white/10'}`}
+                title={autoScroll ? 'Auto-scroll: ON' : 'Auto-scroll: OFF'}
+               >
+                 <ScrollText size={16} />
+                 <span className="hidden sm:inline">{autoScroll ? 'On' : 'Off'}</span>
+               </button>
+             )}
+             <button onClick={() => setShowQueue(true)} className="p-1.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"><List size={22} /></button>
+             <button 
+              onClick={() => (window as any).electronAPI?.toggleMiniPlayer(true)} 
+              className="p-1.5 text-white/40 hover:text-white transition-all hover:bg-white/10 rounded-xl border border-transparent hover:border-white/10"
+              title="Mini-Player"
+             >
+               <Minimize2 size={22} />
+             </button>
+           </div>
         </div>
 
         {/* Row 2: Main Stage (Poster or Lyrics) */}
         <div className="relative flex items-center justify-center overflow-hidden w-full max-w-5xl mx-auto px-4">
            <div className={`transition-all duration-700 w-full flex flex-col items-center justify-center ${isTransitioning ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
             {!showLyrics ? (
-              <div className="relative group flex flex-col items-center justify-center gap-[4vh] md:gap-[6vh]">
+              <div className="relative group flex flex-col items-center justify-center gap-[3vh] md:gap-[4vh]">
                 {/* Poster with Glow */}
                 <div className="relative">
                   <div className="absolute inset-[-40%] rounded-full blur-[100px] opacity-30 animate-blob pointer-events-none" style={{ backgroundColor: theme.primary }}></div>
-                  <div className="relative w-[min(30vh,11rem)] h-[min(30vh,11rem)] md:w-[min(45vh,22.5rem)] md:h-[min(45vh,22.5rem)] rounded-[clamp(20px,5vh,48px)] overflow-hidden border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.8)] cover-float ring-8 ring-white/5 bg-black/20 transition-all duration-500">
+                  <div className="relative w-[min(25vh,9rem)] h-[min(25vh,9rem)] md:w-[min(38vh,18rem)] md:h-[min(38vh,18rem)] rounded-[clamp(16px,4vh,40px)] overflow-hidden border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.8)] cover-float ring-8 ring-white/5 bg-black/20 transition-all duration-500">
                     <img 
                       key={state.currentSong.coverUrl}
                       src={state.currentSong.coverUrl} 
@@ -996,18 +1145,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="relative w-full h-[60vh] flex flex-col items-center">
-                {/* Auto Scroll Toggle */}
-                <div className="absolute top-0 right-4 z-50">
-                  <button 
-                    onClick={() => setAutoScroll(!autoScroll)}
-                    className={`flex items-center gap-2 p-2 px-4 rounded-full border transition-all duration-300 text-[10px] font-black uppercase tracking-widest ${autoScroll ? 'bg-white text-black border-white' : 'bg-black/40 text-white/40 border-white/10 hover:bg-black/60'}`}
-                  >
-                    <ScrollText size={14} />
-                    <span>{autoScroll ? 'Scroll On' : 'Scroll Off'}</span>
-                  </button>
-                </div>
-
+               <div className="relative w-full h-[65vh] flex flex-col items-center">
                 <div ref={lyricsRef} className="w-full h-full overflow-y-auto custom-scrollbar mask-gradient lyrics-container text-center py-10 relative z-[10] px-4 md:px-12">
                    {lyrics.length > 0 ? lyrics.map((line, idx) => {
                      const isActive = state.currentTime >= line.time && (!lyrics[idx+1] || state.currentTime < lyrics[idx+1].time);
@@ -1088,7 +1226,7 @@ export default function App() {
                   <div className="flex items-center gap-6">
                     <button onClick={prevSong} className="p-2 text-white/60 hover:text-white hover:scale-110 active:scale-95 transition-all"><SkipBack size={28} fill="currentColor" /></button>
                     <button 
-                      onClick={togglePlay} 
+                      onClick={() => { if (isAmbientMode) setIsAmbientMode(false); togglePlay(); }} 
                       className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl relative ${state.isPlaying ? 'bg-white/10 text-white border-2 border-white/10 hover:bg-white/20' : 'bg-white text-black hover:scale-105 active:scale-95'}`}
                     >
                       {state.isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
@@ -1126,7 +1264,10 @@ export default function App() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#050505] text-white font-sans selection:bg-white/30">
+    <div 
+      className="relative w-full h-screen overflow-hidden bg-[#050505] text-white font-sans selection:bg-white/30"
+      onClick={unlockAudio}
+    >
       {/* Electron Frameless Titlebar — draggable area */}
       <div className="electron-titlebar" style={{ background: 'linear-gradient(180deg, rgba(5,5,5,0.95) 0%, transparent 100%)' }}>
         <div className="flex items-center h-full px-4 gap-2">
@@ -1138,9 +1279,9 @@ export default function App() {
       <div className="absolute bottom-[-20%] right-[-30%] w-[120%] h-[120%] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-blob animation-delay-2000" style={{ backgroundColor: theme.secondary }}></div>
 
       <div className="relative z-10 w-full h-full flex flex-col md:flex-row max-w-7xl mx-auto md:p-6" style={{ paddingTop: '36px' }}>
-        <div className="hidden md:flex flex-col w-72 backdrop-blur-3xl border border-white/10 rounded-[48px] p-8 mr-6 h-full shadow-2xl bg-white/5 relative overflow-hidden">
-          <div className="text-3xl font-black tracking-tighter mb-12 italic select-none">IZGIV</div>
-          <nav className="space-y-4 flex-1">
+        <div className="hidden md:flex flex-col w-64 backdrop-blur-3xl border border-white/10 rounded-[48px] p-6 mr-6 h-full shadow-2xl bg-white/5 relative overflow-hidden">
+          <div className="text-2xl font-black tracking-tighter mb-10 italic select-none">IZGIV</div>
+          <nav className="space-y-2 flex-1">
              <SidebarItem icon={<Home size={22}/>} label="Home" active={view === 'home'} onClick={() => { setView('home'); setSelectedPlaylist(null); }} />
              <SidebarItem icon={<Search size={22}/>} label="Search" active={view === 'search'} onClick={() => { setView('search'); setSelectedPlaylist(null); }} />
              <SidebarItem icon={<Library size={22}/>} label="Library" active={view === 'library'} onClick={() => { setView('library'); setSelectedPlaylist(null); }} />
@@ -1159,9 +1300,9 @@ export default function App() {
           </footer>
           <div className="h-1 shrink-0 hidden md:block border-b border-white/5 mb-4 opacity-0" />
           {state.currentSong && (
-            <div className="bg-white/5 border border-white/10 rounded-[24px] md:rounded-[40px] p-3 md:p-6 cursor-pointer hover:bg-white/10 transition-all group mt-auto shadow-2xl relative overflow-hidden" onClick={() => setView('player')}>
+            <div className="bg-white/5 border border-white/10 rounded-[24px] md:rounded-[32px] p-3 md:p-5 cursor-pointer hover:bg-white/10 transition-all group mt-auto shadow-2xl relative overflow-hidden" onClick={() => setView('player')}>
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img src={state.currentSong.coverUrl} className="w-full aspect-square rounded-[18px] md:rounded-[32px] object-cover mb-2 md:mb-4 shadow-2xl group-hover:scale-105 transition-transform relative z-10" />
+              <img src={state.currentSong.coverUrl} className="w-full aspect-square rounded-[18px] md:rounded-[24px] object-cover mb-2 md:mb-3 shadow-2xl group-hover:scale-105 transition-transform relative z-10" />
               <div className="font-bold truncate text-[11px] md:text-sm mb-0.5 md:mb-1">{state.currentSong.title}</div>
               <div className="text-[8px] md:text-[10px] text-white/40 truncate tracking-widest uppercase font-black">{state.currentSong.artist}</div>
             </div>

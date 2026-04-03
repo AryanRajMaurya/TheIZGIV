@@ -139,10 +139,10 @@ export const usePlayer = (autoPlay: boolean = true) => {
     const audio = audioRef.current;
     audio.pause();
     
-    const isElectron = !!(window as any).electronAPI;
-    setUseSidecar(isElectron);
+    const isElectronEnv = !!(window as any).electronAPI;
+    setUseSidecar(isElectronEnv);
 
-    if (isElectron) {
+    if (isElectronEnv) {
         try {
             let videoId = (song as any).videoId;
             if (!videoId) {
@@ -299,10 +299,18 @@ export const usePlayer = (autoPlay: boolean = true) => {
     return () => removeMediaListener();
   }, [isElectron, togglePlay, nextSong, prevSong]);
 
+  const setVolume = useCallback((v: number) => {
+    const vol = Math.max(0, Math.min(1, v));
+    if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = vol;
+    }
+    setState(prev => ({ ...prev, volume: vol }));
+  }, []);
+
   const setPlaybackRate = useCallback((rate: number) => {
     audioRef.current.playbackRate = rate;
-    const isElectron = !!(window as any).electronAPI;
-    if (isElectron && useSidecar) {
+    const isElectronEnv = !!(window as any).electronAPI;
+    if (isElectronEnv && useSidecar) {
         (window as any).electronAPI.sidecarCmd({ type: 'speed', value: rate });
     }
     setState(prev => ({ ...prev, playbackRate: rate }));
@@ -409,6 +417,7 @@ export const usePlayer = (autoPlay: boolean = true) => {
     prevSong,
     seek,
     setIsDragging,
+    setVolume,
     setPlaybackRate,
     setPreservesPitch,
     // EQ & Viz Exports
