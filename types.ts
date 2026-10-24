@@ -4,20 +4,20 @@ export interface Song {
   artist: string;
   album: string;
   coverUrl: string;
-  duration: number; // in seconds
-  url?: string; // Audio source URL
-  source: 'youtube' | 'local' | 'mock' | 'spotify' | 'itunes';
+  duration: number;
+  url?: string;
+  source: 'youtube' | 'local' | 'mock' | 'spotify' | 'itunes' | 'unknown';
 }
 
 export interface Playlist {
   id: string;
   name: string;
   songs: Song[];
-  isSystem?: boolean; // e.g. "Favorites"
+  isSystem?: boolean;
 }
 
 export interface LyricsLine {
-  time: number; // seconds
+  time: number;
   text: string;
 }
 
